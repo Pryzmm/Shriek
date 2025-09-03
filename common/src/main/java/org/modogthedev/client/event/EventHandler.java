@@ -20,7 +20,7 @@ import org.vosk.Model;
 
 import javax.sound.sampled.AudioFormat;
 import java.io.*;
-import java.net.URL;
+import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -63,16 +63,16 @@ public class EventHandler {
     }
 
     /**
-     * Sets the Model, this will set the path for the model to be downloaded.
+     * Sets the Model; this will set the path for the model to be downloaded.
      * Different models can be used to change the language, although the
      * mod would also have to be configured for that language.
      * I do NOT recommend changing this as the other models are more than 1GB
-     * See <a href="https://alphacephei.com/vosk/models">Vosk Models</a>}
+     * See <a href="https://alphacephei.com/vosk/models">Vosk Models</a>
      * The default is "vosk-model-small-en-us-0.15"
-     * @param string
+     * @param model The model name to be downloaded from <a href="https://alphacephei.com/vosk/models">Vosk</a>
      */
-    public static void setModel(String string) {
-        modelType = string;
+    public static void setModel(String model) {
+        modelType = model;
     }
 
     private static void listenThreadTask() {
@@ -89,14 +89,14 @@ public class EventHandler {
                         continue;
                     }
 
-                    speechRecognizer = new SpeechRecognizer(new Model(getPath()), VoiceLibConstants.sampleRate);
+                    speechRecognizer = new SpeechRecognizer(new Model(getOrCreatePath()), VoiceLibConstants.sampleRate);
                 } else if (microphoneHandler == null) {  // wait 10 seconds and try to initialize the microphone handler again
                     listenThread.wait(10000);
                     microphoneHandler = new MicrophoneHandler(new AudioFormat(VoiceLibConstants.sampleRate, 16, 1, true, false));
-                    microphoneHandler.startListening();  // Try to restart microphone
+                    microphoneHandler.startListening();  // Try to restart the microphone
                 } else {                                 // If the speech recognizer and the microphone handler are initialized successfully
                     String tmp = speechRecognizer.getStringMsg(microphoneHandler.readData());
-                    if (!tmp.equals("") && !tmp.equals(lastResult) &&
+                    if (!tmp.isEmpty() && !tmp.equals(lastResult) &&
                             VoiceLibClient.recordingSpeech) {   // Read audio data from the microphone and send it to the speech recognizer for recognition
                         if (VoiceLibConstants.encoding_repair) {
                             lastResult = SpeechRecognizer.repairEncoding(tmp, VoiceLibConstants.srcEncoding, VoiceLibConstants.dstEncoding);
@@ -135,7 +135,10 @@ public class EventHandler {
             }
         }
     }
-    private static String getPath() {
+
+    // This has been made publicly accessible for the ability to download other models, rather than the default.
+    // The function name was also changed for a better understanding of functionality
+    public static String getOrCreatePath() {
         String path = "";
         try {
             File file = new File("vosk\\"+modelType);
@@ -143,23 +146,28 @@ public class EventHandler {
             if (!file.exists()) {
                 VoiceLib.LOGGER.info("Downloading voice model...");
                 File download = new File("vosk.zip");
-                FileUtils.copyURLToFile(new URL("https://alphacephei.com/vosk/models/"+modelType+".zip"), download);
+                FileUtils.copyURLToFile(URI.create("https://alphacephei.com/vosk/models/" + modelType + ".zip").toURL(), download);
                 if (download.exists()) {
                     unzip(download.getAbsoluteFile().toPath(), Charset.defaultCharset());
                 } else
-                    VoiceLib.LOGGER.error("Failed to download, check for mod update");
-                VoiceLib.LOGGER.info("Download complete, loading vosk...");
+                    VoiceLib.LOGGER.error("Failed to download, check for a mod update! (Downloaded zip file does not exist)");
+                boolean finishedDeletion = download.delete();
+                if (!finishedDeletion) {
+                    VoiceLib.LOGGER.error("Failed to delete temporary Vosk file!");
+                } else {
+                    VoiceLib.LOGGER.info("Download complete, loading vosk...");
+                }
             }
         } catch (IOException e) {
-            VoiceLib.LOGGER.error("Failed to download, check for mod update");
+            VoiceLib.LOGGER.error("Failed to download: {}", e.getMessage());
         }
         return path;
     }
 
     private static void handelClientStartEvent() {     // when the client launch
-        VoiceLib.LOGGER.info("Loading acoustic model from " + getPath() + "   ..."); // Log the path of the acoustic model
+        VoiceLib.LOGGER.info("Loading acoustic model from {}   ...", getOrCreatePath()); // Log the path of the acoustic model
         try {                                  // Initialize the speech recognizer
-            speechRecognizer = new SpeechRecognizer(new Model(getPath()), VoiceLibConstants.sampleRate);
+            speechRecognizer = new SpeechRecognizer(new Model(getOrCreatePath()), VoiceLibConstants.sampleRate);
             VoiceLib.LOGGER.info("Acoustic model loaded successfully!");
         } catch (Exception e1) {
             VoiceLib.LOGGER.error(e1.getMessage());
@@ -172,8 +180,7 @@ public class EventHandler {
             VoiceLib.LOGGER.error(e2.getMessage());
         }
         if (VoiceLibConstants.encoding_repair) {         // If the encoding repair function is enabled, log a warning
-            VoiceLib.LOGGER.warn(
-                    String.format("(test function) Trt to resolve error encoding from %s to %s...", VoiceLibConstants.srcEncoding, VoiceLibConstants.dstEncoding));
+            VoiceLib.LOGGER.warn("(test function) Trt to resolve error encoding from {} to {}...", VoiceLibConstants.srcEncoding, VoiceLibConstants.dstEncoding);
         }
         listenThread = new Thread(EventHandler::listenThreadTask);
         listenThread.start();
@@ -193,9 +200,9 @@ public class EventHandler {
     private static void handleEndClientTickEvent() {
         if (VoiceLibClient.recordingSpeech &&           // If the user presses the key V
                 microphoneHandler != null &&                                   // If the microphone initialization is successful
-                !lastResult.equals("")) {
+                !lastResult.isEmpty()) {
             if (VoiceLibClient.printToChat)// If the recognized text is not empty
-                VoiceLib.LOGGER.info(VoiceLibConstants.prefix + lastResult);
+                VoiceLib.LOGGER.info("{}{}", VoiceLibConstants.prefix, lastResult);
             if (Minecraft.getInstance().player != null) {
                 if (VoiceLibClient.printToChat)
                     Minecraft.getInstance().player.sendSystemMessage(Component.literal(VoiceLibConstants.prefix + lastResult));
@@ -214,13 +221,16 @@ public class EventHandler {
     private static void handleStartClientTickEvent() {
 //        if (listenThread == null)
 //            handelClientStartEvent();
-        if (VoiceLibClient.recordingSpeech) {  // If the user presses the key V
+        if (VoiceLibClient.recordingSpeech) {
             if (!recordingLastTick)
-                VoiceLib.LOGGER.info("Recording...");
+                VoiceLib.LOGGER.info("Resumed microphone listener...");
             recordingLastTick = true;
         } else {
-            recordingLastTick = false;
-            if (lastResult.length() > 0) {
+            if (recordingLastTick) {
+                VoiceLib.LOGGER.info("Paused microphone listener...");
+                recordingLastTick = false;
+            }
+            if (!lastResult.isEmpty()) {
                 lastResult = "";
             }
         }
