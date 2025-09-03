@@ -2,6 +2,21 @@
 
 Minecraft text to speech library
 
+# Implementation
+
+```java
+repositories {
+    maven {
+        name = "Modrinth"
+        url = "https://api.modrinth.com/maven"
+    }
+}
+
+dependencies {
+    modImplementation "maven.modrinth:voicelib:1.0.1"
+}
+```
+
 # Usage
 
 VoiceLibApi is the class for the API.
