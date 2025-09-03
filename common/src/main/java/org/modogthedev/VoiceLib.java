@@ -16,7 +16,7 @@ public final class VoiceLib {
     }
     public static void init() {
         VoiceLibPackets.register();
-        // Example
-        VoiceLibExample.init();
+        // Example (Since this is a library, and some players may not want this enabled by default, this has been commented out)
+        // VoiceLibExample.init();
     }
 }
