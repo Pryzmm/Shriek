@@ -1,6 +1,7 @@
-# VoiceLib
+# Shriek
+### A maintained version of [VoiceLib by Volcano Bay Studios](https://modrinth.com/mod/voicelib)
 
-Minecraft text to speech library
+A speech to text library that can listen to your microphone and understand what you're saying! Using the power of Vosk, you can speak into your microphone and get an output, and even use multiple languages!
 
 # Implementation
 
@@ -13,7 +14,7 @@ repositories {
 }
 
 dependencies {
-    modImplementation "maven.modrinth:voicelib:1.0.1"
+    modImplementation "maven.modrinth:shriek:1.1.0"
 }
 ```
 
@@ -43,7 +44,6 @@ VoiceLibApi.setPrintToChat(boolean printToChat)
 VoiceLibApi.setPrintToConsole(boolean printToConsole)
 // Same as printToChat but for the console instead. (Default False)
 ```
-All methods have java docs for information on their usages.
 
 # Example
 This method makes it so if any player on the server says "ouch" they light on fire
@@ -53,12 +53,12 @@ VoiceLibApi.registerServerPlayerSpeechListener((serverPlayerTalkEvent -> {
         serverPlayerTalkEvent.getPlayer().igniteForSeconds(2);
 }));
 ```
-You can also see this in VoiceLibExample
+You can also see this in VoiceLibExample through GitHub
 
 # Security
 
-There are a few things to note with this mod,
-- The mod automatically downloads a vosk model from the internet on the first launch, it is about 40MB
-- This mod by default, constantly records and sends all text data to the server. This means a bad actor could listen in on your conversations (But only in text as audio is not sent to the server)
+There are a few things to note with this mod:
+- The mod automatically downloads a vosk model from the internet on the first launch. The default model is ~40MB compressed and may freeze your game for a couple seconds while setting up the model.
+- This mod by default, constantly records and sends all text data to the server. This means if a server modification has set up their mod to, they can listen into your conversation. Please be weary of this.
 - The push to mute key will turn OFF your microphone whilst held
-- Other mods can forcefully enable always on recording, they can also disable it (See VoiceLibClient)
+- Other mods have the ability to toggle recording on/off
