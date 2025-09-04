@@ -38,7 +38,7 @@ dependencies {
     common(project(path: ':common', configuration: 'namedElements')) { transitive false }
     shadowBundle project(path: ':common', configuration: 'transformProductionFabric')
 
-    implementation "com.alphacephei:vosk:$rootProject.vosk_version"
+    api "com.alphacephei:vosk:$rootProject.vosk_version"
     include "com.alphacephei:vosk:$rootProject.vosk_version"
 }
 

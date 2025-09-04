@@ -1,5 +1,7 @@
 package org.modogthedev;
 
+import java.nio.file.Path;
+
 public class VoiceLibConstants {
 
     /**
@@ -8,7 +10,7 @@ public class VoiceLibConstants {
      *
      * @see <a href="https://alphacephei.com/vosk/models">Vosk Models</a>
      */
-    public static String acousticModelPath = "vosk";
+    public static Path acousticModelPath = Path.of("voicelib/vosk");
 
     /**
      * Maximum cache of microphone audio in bytes.

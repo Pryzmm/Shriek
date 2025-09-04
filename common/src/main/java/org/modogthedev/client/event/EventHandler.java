@@ -5,7 +5,6 @@ import dev.architectury.event.events.client.ClientTickEvent;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.modogthedev.VoiceLib;
 import org.modogthedev.VoiceLibClient;
@@ -24,7 +23,6 @@ import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Enumeration;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -63,7 +61,7 @@ public class EventHandler {
     }
 
     /**
-     * Sets the Model; this will set the path for the model to be downloaded.
+     * Sets the Model to be downloaded.
      * Different models can be used to change the language, although the
      * mod would also have to be configured for that language.
      * I do NOT recommend changing this as the other models are more than 1GB
@@ -73,6 +71,14 @@ public class EventHandler {
      */
     public static void setModel(String model) {
         modelType = model;
+    }
+
+    /**
+     * Sets the path for the Model to be downloaded.
+     * @param path The path to be downloaded to
+     */
+    public static void setModelPath(Path path) {
+        VoiceLibConstants.acousticModelPath = path;
     }
 
     private static void listenThreadTask() {
@@ -112,8 +118,7 @@ public class EventHandler {
     }
 
     private static void unzip(Path path, Charset charset) throws IOException {
-        String fileBaseName = FilenameUtils.getBaseName(path.getFileName().toString());
-        Path destFolderPath = Paths.get(path.getParent().toString(), fileBaseName);
+        Path destFolderPath = VoiceLibConstants.acousticModelPath;
 
         try (ZipFile zipFile = new ZipFile(path.toFile(), ZipFile.OPEN_READ, charset)) {
             Enumeration<? extends ZipEntry> entries = zipFile.entries();
@@ -133,6 +138,8 @@ public class EventHandler {
                     }
                 }
             }
+        } catch (Exception e) {
+            VoiceLib.LOGGER.error("Failed to unzip file: {}", e.getMessage());
         }
     }
 
@@ -141,8 +148,9 @@ public class EventHandler {
     public static String getOrCreatePath() {
         String path = "";
         try {
-            File file = new File("vosk\\"+modelType);
-            path = new File("vosk\\"+modelType).getAbsoluteFile().toString();
+            Path downloadPath = VoiceLibConstants.acousticModelPath;
+            File file = new File(downloadPath+"\\"+modelType);
+            path = new File(downloadPath+"\\"+modelType).getAbsoluteFile().toString();
             if (!file.exists()) {
                 VoiceLib.LOGGER.info("Downloading voice model...");
                 File download = new File("vosk.zip");
@@ -155,7 +163,7 @@ public class EventHandler {
                 if (!finishedDeletion) {
                     VoiceLib.LOGGER.error("Failed to delete temporary Vosk file!");
                 } else {
-                    VoiceLib.LOGGER.info("Download complete, loading vosk...");
+                    VoiceLib.LOGGER.info("Download complete, loading Vosk...");
                 }
             }
         } catch (IOException e) {
@@ -165,10 +173,10 @@ public class EventHandler {
     }
 
     private static void handelClientStartEvent() {     // when the client launch
-        VoiceLib.LOGGER.info("Loading acoustic model from {}   ...", getOrCreatePath()); // Log the path of the acoustic model
+        VoiceLib.LOGGER.info("Loading Vosk model '{}' from '{}'   ...", VoiceLibConstants.acousticModelPath, getOrCreatePath()); // Log the path of the acoustic model
         try {                                  // Initialize the speech recognizer
             speechRecognizer = new SpeechRecognizer(new Model(getOrCreatePath()), VoiceLibConstants.sampleRate);
-            VoiceLib.LOGGER.info("Acoustic model loaded successfully!");
+            VoiceLib.LOGGER.info("Vosk model loaded successfully!");
         } catch (Exception e1) {
             VoiceLib.LOGGER.error(e1.getMessage());
         }
