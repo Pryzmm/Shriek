@@ -39,7 +39,7 @@ dependencies {
     shadowBundle project(path: ':common', configuration: 'transformProductionFabric')
 
     api "com.alphacephei:vosk:$rootProject.vosk_version"
-    include "com.alphacephei:vosk:$rootProject.vosk_version"
+    shadowBundle "com.alphacephei:vosk:$rootProject.vosk_version"
 }
 
 processResources {

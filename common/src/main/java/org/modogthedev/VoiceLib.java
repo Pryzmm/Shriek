@@ -1,7 +1,6 @@
 package org.modogthedev;
 
 import net.minecraft.resources.ResourceLocation;
-import org.modogthedev.api.VoiceLibExample;
 import org.modogthedev.networking.VoiceLibPackets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

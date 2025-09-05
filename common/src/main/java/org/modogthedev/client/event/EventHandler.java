@@ -19,11 +19,14 @@ import org.vosk.Model;
 
 import javax.sound.sampled.AudioFormat;
 import java.io.*;
+import java.lang.reflect.Constructor;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Enumeration;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -172,26 +175,75 @@ public class EventHandler {
         return path;
     }
 
-    private static void handelClientStartEvent() {     // when the client launch
-        VoiceLib.LOGGER.info("Loading Vosk model '{}' from '{}'   ...", VoiceLibConstants.acousticModelPath, getOrCreatePath()); // Log the path of the acoustic model
-        try {                                  // Initialize the speech recognizer
-            speechRecognizer = new SpeechRecognizer(new Model(getOrCreatePath()), VoiceLibConstants.sampleRate);
-            VoiceLib.LOGGER.info("Vosk model loaded successfully!");
-        } catch (Exception e1) {
-            VoiceLib.LOGGER.error(e1.getMessage());
+    private static boolean voskInitialized = false;
+    private static Timer retryTimer = null;
+
+    private static void handelClientStartEvent() {
+        VoiceLib.LOGGER.info("Loading Vosk model '{}' from '{}'   ...", VoiceLibConstants.acousticModelPath, getOrCreatePath());
+        if (!tryInitializeVosk()) {
+            scheduleVoskRetry();
         }
-        try {                                   // Initialize the microphone handler, single channel, 16 bits per sample, signed, little endian
+        initializeMicrophone();
+        if (listenThread == null) {
+            listenThread = new Thread(EventHandler::listenThreadTask);
+            listenThread.start();
+        }
+    }
+
+    private static boolean tryInitializeVosk() {
+        try {
+            Class<?> modelClass = Class.forName("org.vosk.Model");
+            VoiceLib.LOGGER.info("Vosk Model class found successfully");
+            Constructor<?> constructor = modelClass.getConstructor(String.class);
+            Object model = constructor.newInstance(getOrCreatePath());
+            speechRecognizer = new SpeechRecognizer((Model) model, VoiceLibConstants.sampleRate);
+            VoiceLib.LOGGER.info("Vosk model loaded successfully!");
+            voskInitialized = true;
+            return true;
+        } catch (ClassNotFoundException e) {
+            VoiceLib.LOGGER.error("Vosk classes not found on classpath: {}", e.getMessage());
+            return false;
+        } catch (UnsatisfiedLinkError e) {
+            VoiceLib.LOGGER.error("Vosk native libraries not found: {}", e.getMessage());
+            return false;
+        } catch (Exception e) {
+            VoiceLib.LOGGER.error("Failed to load Vosk (will retry): {} - {}", e.getClass().getSimpleName(), e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    private static void scheduleVoskRetry() {
+        if (retryTimer != null) {
+            retryTimer.cancel();
+        }
+
+        retryTimer = new Timer("VoskRetryTimer", true);
+        retryTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                if (!voskInitialized && tryInitializeVosk()) {
+                    retryTimer.cancel();
+                    retryTimer = null;
+                } else if (!voskInitialized) {
+                    scheduleVoskRetry();
+                }
+            }
+        }, 5000);
+    }
+
+    private static void initializeMicrophone() {
+        try {
             microphoneHandler = new MicrophoneHandler(new AudioFormat(VoiceLibConstants.sampleRate, 16, 1, true, false));
             microphoneHandler.startListening();
             VoiceLib.LOGGER.info("Microphone handler initialized successfully!");
         } catch (Exception e2) {
-            VoiceLib.LOGGER.error(e2.getMessage());
+            VoiceLib.LOGGER.error("Failed to initialize microphone: {}", e2.getMessage());
         }
-        if (VoiceLibConstants.encoding_repair) {         // If the encoding repair function is enabled, log a warning
+
+        if (VoiceLibConstants.encoding_repair) {
             VoiceLib.LOGGER.warn("(test function) Trt to resolve error encoding from {} to {}...", VoiceLibConstants.srcEncoding, VoiceLibConstants.dstEncoding);
         }
-        listenThread = new Thread(EventHandler::listenThreadTask);
-        listenThread.start();
     }
     public static void resetListener() {
         handleClientStopEvent();
