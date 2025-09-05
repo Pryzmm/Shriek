@@ -51,7 +51,7 @@ public class EventHandler {
      */
     private static Thread listenThread;
     private static boolean recordingLastTick = false;
-    private static String modelType = "vosk-model-small-en-us-0.15";
+    public static String modelType = "vosk-model-small-en-us-0.15";
 
     /**
      * This method is used to register the response processing for the game start event
