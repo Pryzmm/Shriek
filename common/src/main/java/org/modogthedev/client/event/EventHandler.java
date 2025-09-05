@@ -42,6 +42,11 @@ public class EventHandler {
     private static SpeechRecognizer speechRecognizer;
 
     /**
+     * The following variables are used to store the loaded model
+     */
+    private static String loadedModel;
+
+    /**
      * The following variables are used to store the last recognized result
      */
     private static String lastResult = "";
@@ -51,7 +56,6 @@ public class EventHandler {
      */
     private static Thread listenThread;
     private static boolean recordingLastTick = false;
-    public static String modelType = "vosk-model-small-en-us-0.15";
 
     /**
      * This method is used to register the response processing for the game start event
@@ -59,21 +63,8 @@ public class EventHandler {
     public static void register() {
         ClientTickEvent.CLIENT_PRE.register(minecraft -> handleStartClientTickEvent());
         ClientTickEvent.CLIENT_POST.register(minecraft -> handleEndClientTickEvent());
-        ClientLifecycleEvent.CLIENT_STARTED.register(minecraft -> handelClientStartEvent());
+        //ClientLifecycleEvent.CLIENT_STARTED.register(minecraft -> loadVoskModel());
         ClientLifecycleEvent.CLIENT_STOPPING.register(minecraft -> handleClientStopEvent());
-    }
-
-    /**
-     * Sets the Model to be downloaded.
-     * Different models can be used to change the language, although the
-     * mod would also have to be configured for that language.
-     * I do NOT recommend changing this as the other models are more than 1GB
-     * See <a href="https://alphacephei.com/vosk/models">Vosk Models</a>
-     * The default is "vosk-model-small-en-us-0.15"
-     * @param model The model name to be downloaded from <a href="https://alphacephei.com/vosk/models">Vosk</a>
-     */
-    public static void setModel(String model) {
-        modelType = model;
     }
 
     /**
@@ -98,7 +89,7 @@ public class EventHandler {
                         continue;
                     }
 
-                    speechRecognizer = new SpeechRecognizer(new Model(getOrCreatePath()), VoiceLibConstants.sampleRate);
+                    speechRecognizer = new SpeechRecognizer(new Model(getOrCreatePath(loadedModel)), VoiceLibConstants.sampleRate);
                 } else if (microphoneHandler == null) {  // wait 10 seconds and try to initialize the microphone handler again
                     listenThread.wait(10000);
                     microphoneHandler = new MicrophoneHandler(new AudioFormat(VoiceLibConstants.sampleRate, 16, 1, true, false));
@@ -148,16 +139,16 @@ public class EventHandler {
 
     // This has been made publicly accessible for the ability to download other models, rather than the default.
     // The function name was also changed for a better understanding of functionality
-    public static String getOrCreatePath() {
+    public static String getOrCreatePath(String voskModel) {
         String path = "";
         try {
             Path downloadPath = VoiceLibConstants.acousticModelPath;
-            File file = new File(downloadPath+"\\"+modelType);
-            path = new File(downloadPath+"\\"+modelType).getAbsoluteFile().toString();
+            File file = new File(downloadPath+"\\"+voskModel);
+            path = new File(downloadPath+"\\"+voskModel).getAbsoluteFile().toString();
             if (!file.exists()) {
-                VoiceLib.LOGGER.info("Downloading voice model...");
+                VoiceLib.LOGGER.info("Downloading vosk model {}...", voskModel);
                 File download = new File("vosk.zip");
-                FileUtils.copyURLToFile(URI.create("https://alphacephei.com/vosk/models/" + modelType + ".zip").toURL(), download);
+                FileUtils.copyURLToFile(URI.create("https://alphacephei.com/vosk/models/" + voskModel + ".zip").toURL(), download);
                 if (download.exists()) {
                     unzip(download.getAbsoluteFile().toPath(), Charset.defaultCharset());
                 } else
@@ -178,9 +169,15 @@ public class EventHandler {
     private static boolean voskInitialized = false;
     private static Timer retryTimer = null;
 
-    private static void handelClientStartEvent() {
-        VoiceLib.LOGGER.info("Loading Vosk model '{}' from '{}'   ...", VoiceLibConstants.acousticModelPath, getOrCreatePath());
-        if (!tryInitializeVosk()) {
+
+    public static void loadVoskModel() {
+        loadVoskModel(VoiceLibConstants.modelType);
+    }
+
+    public static void loadVoskModel(String voskModel) {
+        loadedModel = voskModel;
+        VoiceLib.LOGGER.info("Loading Vosk model '{}' from '{}'   ...", voskModel, getOrCreatePath(voskModel));
+        if (!tryInitializeVosk(loadedModel)) {
             scheduleVoskRetry();
         }
         initializeMicrophone();
@@ -190,12 +187,18 @@ public class EventHandler {
         }
     }
 
+
+
     private static boolean tryInitializeVosk() {
+        return tryInitializeVosk(VoiceLibConstants.modelType);
+    }
+
+    private static boolean tryInitializeVosk(String voskModel) {
         try {
             Class<?> modelClass = Class.forName("org.vosk.Model");
             VoiceLib.LOGGER.info("Vosk Model class found successfully");
             Constructor<?> constructor = modelClass.getConstructor(String.class);
-            Object model = constructor.newInstance(getOrCreatePath());
+            Object model = constructor.newInstance(getOrCreatePath(voskModel));
             speechRecognizer = new SpeechRecognizer((Model) model, VoiceLibConstants.sampleRate);
             VoiceLib.LOGGER.info("Vosk model loaded successfully!");
             voskInitialized = true;
@@ -222,7 +225,7 @@ public class EventHandler {
         retryTimer.schedule(new TimerTask() {
             @Override
             public void run() {
-                if (!voskInitialized && tryInitializeVosk()) {
+                if (!voskInitialized && tryInitializeVosk(loadedModel)) {
                     retryTimer.cancel();
                     retryTimer = null;
                 } else if (!voskInitialized) {

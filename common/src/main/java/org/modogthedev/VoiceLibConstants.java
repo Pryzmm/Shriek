@@ -18,6 +18,8 @@ public class VoiceLibConstants {
      */
     public static int cacheSize = 4096;    // The size of the cache used to store audio data, use bytes as the unit, the default is 4096 bytes
 
+    public static String modelType = "vosk-model-small-en-us-0.15";    // The size of the cache used to store audio data, use bytes as the unit, the default is 4096 bytes
+
     /**
      * The sample rate of the microphone, the default is 16000.
      * The default value is 16000, which is the recommended value.
