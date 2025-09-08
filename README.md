@@ -14,7 +14,7 @@ repositories {
 }
 
 dependencies {
-    modImplementation "maven.modrinth:shriek:1.1.0"
+    modImplementation "maven.modrinth:shriek:1.1.0+fabric" // or +neoforge
 }
 ```
 
