@@ -34,6 +34,7 @@ public class ShriekApi {
      * @param printToChat Whether it should print to chat or not
      * @deprecated This will (probably) not print to chat. Please use your own methods to print to chat through registerServerPlayerSpeechListener()
      */
+    @Deprecated
     public static void setPrintToChat(boolean printToChat) {
         ShriekClient.printToChat = printToChat;
     }
