@@ -23,7 +23,7 @@ dependencies {
 VoiceLibApi is the class for the API.
 The following are the methods you will be using
 ```java
-import org.modogthedev.client.event.EventHandler;
+import event.client.com.pryzmm.EventHandler;
 EventHandler.setModel();
 // This will set the language model, defined in https://alphacephei.com/vosk/models
 // Language models vary in size; the default is vosk-model-small-en-us-0.15, which is ~40 MB compressed, while others like vosk-model-ru-0.10 are ~2.5GB compressed
