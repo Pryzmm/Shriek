@@ -1,29 +1,29 @@
 {
   "schemaVersion": 1,
-  "id": "voicelib",
+  "id": "shriek",
   "version": "${version}",
-  "name": "VoiceLib",
-  "description": "A Minecraft Voice Recognition Library",
+  "name": "Shriek",
+  "description": "A Minecraft Voice Recognition Library (Maintained from ModogTheDev)",
   "authors": [
-    "ModogTheDev"
+    "Pryzmm"
   ],
   "contact": {
-    "homepage": "https://fabricmc.net/",
-    "sources": "https://github.com/FabricMC/fabric-example-mod"
+    "homepage": "https://modrinth.com/mod/shriek",
+    "sources": "https://github.com/Pryzmm/Shriek"
   },
   "license": "MIT",
-  "icon": "assets/voicelib/icon.png",
+  "icon": "assets/shriek/icon.png",
   "environment": "*",
   "entrypoints": {
     "main": [
-      "org.modogthedev.fabric.VoiceLibFabric"
+      "com.pryzmm.fabric.ShriekFabric"
     ],
     "client": [
-      "org.modogthedev.fabric.client.VoiceLibFabricClient"
+      "com.pryzmm.fabric.client.ShriekFabricClient"
     ]
   },
   "mixins": [
-    "voicelib.mixins.json"
+    "shriek.mixins.json"
   ],
   "depends": {
     "fabricloader": ">=0.16.2",

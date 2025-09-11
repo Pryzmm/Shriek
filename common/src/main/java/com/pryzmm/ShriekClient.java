@@ -1,0 +1,32 @@
+package com.pryzmm;
+
+import com.mojang.blaze3d.platform.InputConstants;
+import dev.architectury.event.events.client.ClientTickEvent;
+import dev.architectury.registry.client.keymappings.KeyMappingRegistry;
+import net.minecraft.client.KeyMapping;
+import com.pryzmm.client.event.EventHandler;
+
+public class ShriekClient {
+    public static boolean recordingSpeech = false;
+    public static boolean alwaysOnRecording = true;
+    public static boolean printToChat = false;
+    public static boolean printToConsole = false;
+    public static KeyMapping vKeyMapping = new KeyMapping(
+            "key.shriek.push_to_mute", // The translation key of the name shown in the Controls screen
+            InputConstants.Type.KEYSYM, // This key mapping is for Keyboards by default
+            InputConstants.KEY_V, // The default keycode
+            "category.shriek.shriek" // The category translation key used to categorize in the Controls screen
+    );
+
+    public static void init() {
+        KeyMappingRegistry.register(vKeyMapping);
+        ClientTickEvent.CLIENT_POST.register(minecraft -> {
+            if (alwaysOnRecording)
+                recordingSpeech = !vKeyMapping.isDown();
+            else
+                recordingSpeech = vKeyMapping.isDown();
+        });
+
+        EventHandler.register();
+    }
+}
