@@ -1,7 +1,8 @@
 # Shriek
 ### A maintained version of [VoiceLib by Volcano Bay Studios](https://modrinth.com/mod/voicelib)
 
-[![Requires Architectury API](https://raw.githubusercontent.com/intergrav/devins-badges/refs/heads/v3/assets/cozy/requires/architectury-api_64h.png 'Architectury API')](https://modrinth.com/mod/architectury-api)
+[![Requires Architectury API](https://raw.githubusercontent.com/intergrav/devins-badges/refs/heads/v3/assets/cozy/requires/architectury-api_64h.png 'Architectury API')](https://modrinth.com/mod/architectury-api) 
+[![Check The Documentation](https://raw.githubusercontent.com/intergrav/devins-badges/refs/heads/v3/assets/cozy/documentation/ghpages_64h.png 'Check The Documentation')](https://github.com/Pryzmm/Shriek/wiki)
 
 A speech to text library that can listen to your microphone and understand what you're saying! Using the power of Vosk, you can speak into your microphone and get an output, and even use multiple languages!
 
