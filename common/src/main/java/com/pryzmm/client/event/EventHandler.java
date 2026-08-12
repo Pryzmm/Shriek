@@ -77,35 +77,32 @@ public class EventHandler {
     private static void listenThreadTask() {
         while (true) {
             try {
-                if (speechRecognizer == null) {         // wait 10 seconds and try to initialize the speech recognizer again
-//                    if (Minecraft.getInstance().player != null) {
-//                        Minecraft.getInstance().player.sendSystemMessage(Component.literal("§cAcoustic Model Load Failed"));
-//                    }
-                    // listenThread.wait(10000);
-                    try {
-                        Thread.sleep(10000);
-                    } catch (InterruptedException ie) {
-                        continue;
-                    }
-
+                if (speechRecognizer == null) {
+                    if (Minecraft.getInstance().player != null) Shriek.LOGGER.error("Acoustic Model Load Failed");
+                    Thread.sleep(10000);
                     speechRecognizer = new SpeechRecognizer(new Model(getOrCreatePath(loadedModel)), ShriekConstants.sampleRate);
-                } else if (microphoneHandler == null) {  // wait 10 seconds and try to initialize the microphone handler again
-                    listenThread.wait(10000);
+                } else if (microphoneHandler == null) {
+                    Thread.sleep(10000);
                     microphoneHandler = new MicrophoneHandler(new AudioFormat(ShriekConstants.sampleRate, 16, 1, true, false));
-                    microphoneHandler.startListening();  // Try to restart the microphone
-                } else {                                 // If the speech recognizer and the microphone handler are initialized successfully
+                    microphoneHandler.startListening();
+                } else {
                     String tmp = speechRecognizer.getStringMsg(microphoneHandler.readData());
                     if (!tmp.isEmpty() && !tmp.equals(lastResult) &&
-                            ShriekClient.recordingSpeech) {   // Read audio data from the microphone and send it to the speech recognizer for recognition
+                            ShriekClient.recordingSpeech) {
                         if (ShriekConstants.encoding_repair) {
                             lastResult = SpeechRecognizer.repairEncoding(tmp, ShriekConstants.srcEncoding, ShriekConstants.dstEncoding);
-                        } else {                                        // default configuration without encoding repair
-                            lastResult = tmp;                           // restore the recognized text
+                        } else {
+                            lastResult = tmp;
                         }
                     }
                 }
+            } catch (InterruptedException e) {
+                Shriek.LOGGER.info("Listen thread interrupted, shutting down.");
+                Thread.currentThread().interrupt(); // restore interrupted status
+                return; // exit the loop cleanly instead of swallowing it
             } catch (Exception e) {
-                Shriek.LOGGER.error(e.getMessage());
+                Shriek.LOGGER.error("Error in listenThreadTask: {}", e.getMessage());
+                if (e.getMessage().contains("little-endian not supported.")) return; // TODO: Add support for this in the lol
             }
         }
     }
