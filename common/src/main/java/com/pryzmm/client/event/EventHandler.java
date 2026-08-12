@@ -78,16 +78,8 @@ public class EventHandler {
         while (true) {
             try {
                 if (speechRecognizer == null) {         // wait 10 seconds and try to initialize the speech recognizer again
-//                    if (Minecraft.getInstance().player != null) {
-//                        Minecraft.getInstance().player.sendSystemMessage(Component.literal("§cAcoustic Model Load Failed"));
-//                    }
-                    // listenThread.wait(10000);
-                    try {
-                        Thread.sleep(10000);
-                    } catch (InterruptedException ie) {
-                        continue;
-                    }
-
+                    if (Minecraft.getInstance().player != null) Shriek.LOGGER.error("Acoustic Model Load Failed");
+                    listenThread.wait(10000);
                     speechRecognizer = new SpeechRecognizer(new Model(getOrCreatePath(loadedModel)), ShriekConstants.sampleRate);
                 } else if (microphoneHandler == null) {  // wait 10 seconds and try to initialize the microphone handler again
                     listenThread.wait(10000);
@@ -105,7 +97,7 @@ public class EventHandler {
                     }
                 }
             } catch (Exception e) {
-                Shriek.LOGGER.error(e.getMessage());
+                Shriek.LOGGER.error("Error in listenThreadTask: {}", e.getMessage());
             }
         }
     }
